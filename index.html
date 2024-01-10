@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escrow Contract Interaction</title>
+    <!-- Добавляем библиотеку ethers.js -->
+</head>
+<body>
+
+<h1>Escrow Contract Interaction</h1>
+
+<p>Contract Address: <span id="contractAddress">0x56ff0951797e35662ddd0f527ecd0ee74b5ae416</span></p>
+
+<button onclick="createNewItem()">Create New Item</button>
+
+<p>Item ID: <input type="number" id="itemId" placeholder="Enter Item ID"></p>
+<button onclick="orderItem()">Order Item</button>
+<button onclick="performDelivery()">Perform Delivery</button>
+<button onclick="paySeller()">Pay Seller</button>
+<button onclick="refundIfNotClaimed()">Refund If Not Claimed</button>
+
+<!-- Кнопки для вывода информации -->
+<button onclick="getBalance()">Get Balance</button>
+<button onclick="getItemOwner()">Get Item Owner</button>
+<button onclick="getItemStatus()">Get Item Status</button>
+<button onclick="getArbiter()">Get Arbiter</button>
+<button onclick="getArbiterFee()">Get Arbiter Fee</button>
+<button onclick="getTotalItems()">Get Total Items</button>
+<script type="module">
+    import { ethers } from "https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.min.js";
+  
+    const contractAddress = "0x8aaf5be81f03a82d47aac96ed35ee567665da30c"; // Замените на актуальный адрес вашего смарт-контракта
+    const contractABI = [
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "itemId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "description",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum Escrow.Status",
+				"name": "status",
+				"type": "uint8"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "function_caller",
+				"type": "address"
+			}
+		],
+		"name": "Action",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_price",
+				"type": "uint256"
+			}
+		],
+		"name": "createNewItem",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "itemId",
+				"type": "uint256"
+			}
+		],
+		"name": "orderItem",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "itemId",
+				"type": "uint256"
+			}
+		],
+		"name": "paySeller",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "itemId",
+				"type": "uint256"
+			}
+		],
+		"name": "performDelivery",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "itemId",
+				"type": "uint256"
+			}
+		],
+		"name": "refundIfNotClaimed",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "arbiter",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "arbiter_fee",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "balance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "buyer",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "itemId",
+				"type": "uint256"
+			}
+		],
+		"name": "getDeliveryTime",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "itemId",
+				"type": "uint256"
+			}
+		],
+		"name": "getItemStatus",
+		"outputs": [
+			{
+				"internalType": "enum Escrow.Status",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "ownerOf",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "priceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "seller",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalItems",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]; // Замените на актуальный ABI вашего смарт-контракта
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    
+    const escrowContract = new ethers.Contract(contractAddress, contractABI, provider);
+
+    async function createNewItem() {
+        const price = prompt("Enter the item price:");
+        const result = await escrowContract.createNewItem(price);
+        console.log(result);
+    }
+
+    async function orderItem() {
+        const itemId = document.getElementById("itemId").value;
+        const result = await escrowContract.orderItem(itemId, { value: ethers.utils.parseEther("ITEM_PRICE_IN_ETHER") });
+        console.log(result);
+    }
+
+    async function performDelivery() {
+        const itemId = document.getElementById("itemId").value;
+        const result = await escrowContract.performDelivery(itemId);
+        console.log(result);
+    }
+
+    async function paySeller() {
+        const itemId = document.getElementById("itemId").value;
+        const result = await escrowContract.paySeller(itemId);
+        console.log(result);
+    }
+
+    async function refundIfNotClaimed() {
+        const itemId = document.getElementById("itemId").value;
+        const result = await escrowContract.refundIfNotClaimed(itemId);
+        console.log(result);
+    }
+
+    async function getBalance() {
+        const balance = await escrowContract.balance();
+        alert("Contract Balance: ${ethers.utils.formatEther(balance)}");
+    }
+
+    async function getItemOwner() {
+        const itemId = document.getElementById("itemId").value;
+        const owner = await escrowContract.ownerOf(itemId);
+        alert("Owner of Item ${itemId}: ${owner}");
+    }
+
+    async function getItemStatus() {
+        const itemId = document.getElementById("itemId").value;
+        const status = await escrowContract.getItemStatus(itemId);
+        alert("Status of Item ${itemId}: ${status}");
+    }
+
+    async function getArbiter() {
+        const arbiter = await escrowContract.arbiter();
+        alert("Arbiter: ${arbiter}");
+    }
+
+    async function getArbiterFee() {
+        const arbiterFee = await escrowContract.arbiter_fee();
+        alert("Arbiter Fee: ${ethers.utils.formatEther(arbiterFee)}");
+    }
+
+    async function getTotalItems() {
+        const totalItems = await escrowContract.totalItems();
+        alert("Total Items: ${totalItems}");
+    }
+</script>
+
+</body>
+</html>
