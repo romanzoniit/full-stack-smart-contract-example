@@ -20,6 +20,7 @@ contract Escrow{
         uint256 itemId;
         uint256 price;
         address owner;
+        uint256 countItem;
         Status status;
         uint256 deliveryTimestamp;
     }
@@ -48,6 +49,7 @@ contract Escrow{
         item.price = _price;
         item.owner = msg.sender;
         item.status = Status.OPEN;
+        item.countItem = 0;
 
         ownerOf[_itemId] = msg.sender;
         priceOf[_itemId] = _price;
@@ -64,7 +66,8 @@ contract Escrow{
         require(msg.sender != ownerOf[itemId], "Owner cannot buy his own item");
         require(msg.sender != arbiter, "Arbiter cannot order the item");
         require(msg.value >= priceOf[itemId], "Pay the correct price of the item");
-        
+        require(items[itemId].countItem < 1 , "Only 1 piece");
+        items[itemId].countItem++;
         items[itemId].status = Status.PENDING;
         
         buyer = msg.sender;
