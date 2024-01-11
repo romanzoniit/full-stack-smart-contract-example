@@ -10,7 +10,7 @@
 
 <h1>Escrow Contract Interaction</h1>
 
-<p>Contract Address: <span id="contractAddress">0x56ff0951797e35662ddd0f527ecd0ee74b5ae416</span></p>
+<p>Contract Address: <span id="contractAddress">0xf8e015f02ce5552f6aa13de0ecb46808fdfc43df</span></p>
 
 <button onclick="createNewItem()">Create New Item</button>
 
@@ -19,18 +19,10 @@
 <button onclick="performDelivery()">Perform Delivery</button>
 <button onclick="paySeller()">Pay Seller</button>
 <button onclick="refundIfNotClaimed()">Refund If Not Claimed</button>
-
-<!-- Кнопки для вывода информации -->
-<button onclick="getBalance()">Get Balance</button>
-<button onclick="getItemOwner()">Get Item Owner</button>
-<button onclick="getItemStatus()">Get Item Status</button>
-<button onclick="getArbiter()">Get Arbiter</button>
-<button onclick="getArbiterFee()">Get Arbiter Fee</button>
-<button onclick="getTotalItems()">Get Total Items</button>
-<script type="module">
-    import { ethers } from "https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.min.js";
+<script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+<script>
   
-    const contractAddress = "0x8aaf5be81f03a82d47aac96ed35ee567665da30c"; // Замените на актуальный адрес вашего смарт-контракта
+    const contractAddress = "0xf8e015f02ce5552f6aa13de0ecb46808fdfc43df"; // Замените на актуальный адрес вашего смарт-контракта
     const contractABI = [
 	{
 		"inputs": [],
@@ -290,13 +282,33 @@
 ]; // Замените на актуальный ABI вашего смарт-контракта
 
     const provider = new ethers.providers.Web3Provider(window.ethereum);
-    
     const escrowContract = new ethers.Contract(contractAddress, contractABI, provider);
+    
+    console.log("MetaMask installed")
 
+    window.addEventListener('load', async e =>  {
+        let accounts = await provider.send("eth_requestAccounts", []);
+        
+        console.log(accounts[0]);
+    });
+
+    
     async function createNewItem() {
         const price = prompt("Enter the item price:");
-        const result = await escrowContract.createNewItem(price);
-        console.log(result);
+
+        await provider.send('eth_requestAccounts', []);
+        const signer = provider.getSigner()
+        console.log(provider);
+
+        console.log(signer);
+
+        const contractWithSigner = escrowContract.connect(signer);
+
+        const options = { value: ethers.utils.parseEther(price.toString()) };
+        let tx = await contractWithSigner.createNewItem(options);
+        console.log(tx);
+
+
     }
 
     async function orderItem() {
@@ -323,37 +335,6 @@
         console.log(result);
     }
 
-    async function getBalance() {
-        const balance = await escrowContract.balance();
-        alert("Contract Balance: ${ethers.utils.formatEther(balance)}");
-    }
-
-    async function getItemOwner() {
-        const itemId = document.getElementById("itemId").value;
-        const owner = await escrowContract.ownerOf(itemId);
-        alert("Owner of Item ${itemId}: ${owner}");
-    }
-
-    async function getItemStatus() {
-        const itemId = document.getElementById("itemId").value;
-        const status = await escrowContract.getItemStatus(itemId);
-        alert("Status of Item ${itemId}: ${status}");
-    }
-
-    async function getArbiter() {
-        const arbiter = await escrowContract.arbiter();
-        alert("Arbiter: ${arbiter}");
-    }
-
-    async function getArbiterFee() {
-        const arbiterFee = await escrowContract.arbiter_fee();
-        alert("Arbiter Fee: ${ethers.utils.formatEther(arbiterFee)}");
-    }
-
-    async function getTotalItems() {
-        const totalItems = await escrowContract.totalItems();
-        alert("Total Items: ${totalItems}");
-    }
 </script>
 
 </body>
